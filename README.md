@@ -1,6 +1,6 @@
 # CPU Lab — Simulador de Arquitetura
 
-Simulador didático, construído em HTML, CSS e JavaScript puro, para experimentar máquinas de zero, um, dois e três endereços.
+Simulador didático, construído em HTML, CSS e JavaScript puro, para experimentar máquinas de zero, um, dois e três endereços. É possível configurar até 32 registradores e 64 posições de memória, renomear endereços e editar todos os valores.
 
 ## Executar localmente
 

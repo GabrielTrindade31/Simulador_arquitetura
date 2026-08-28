@@ -25,7 +25,8 @@ function renderArchitecture(load=true){
 }
 function updateConfig(){
   $('regValue').value=$('registers').value;
-  $('machineId').textContent=`${arch}E–${String($('registers').value).padStart(2,'0')}R–${$('accumulator').checked?'ACC':'STD'}`;
+  $('memoryValue').value=$('memorySize').value;
+  $('machineId').textContent=`${arch}E–${String($('registers').value).padStart(2,'0')}R–${String($('memorySize').value).padStart(2,'0')}M–${$('accumulator').checked?'ACC':'STD'}`;
   registerKeys().forEach(k=>{if(!(k in values))values[k]=0;if(!labels[k])labels[k]=k});renderRegisters();
 }
 function renderRegisters(){
@@ -35,8 +36,13 @@ function renderRegisters(){
   document.querySelectorAll('.reg-value').forEach(input=>input.addEventListener('change',e=>{const key=e.target.closest('.register').dataset.key;if(key==='ACC')acc=+e.target.value||0;else values[key]=+e.target.value||0}));
 }
 function renderMemory(){
-  $('memoryGrid').innerHTML=Object.entries(memory).map(([key,value])=>`<label><span>${key}</span><input type="number" data-memory="${key}" value="${value}" aria-label="Memória ${key}"></label>`).join('');
-  document.querySelectorAll('[data-memory]').forEach(i=>i.addEventListener('change',e=>memory[e.target.dataset.memory]=+e.target.value||0));
+  const size=+$('memorySize').value;
+  const entries=Object.entries(memory).filter(([key])=>key!=='RESULT');
+  while(entries.length<size){const key=`M${String(entries.length).padStart(2,'0')}`;entries.push([key,0]);memory[key]=0}
+  Object.keys(memory).filter(key=>key!=='RESULT'&&!entries.slice(0,size).some(([active])=>active===key)).forEach(key=>delete memory[key]);
+  $('memoryGrid').innerHTML=entries.slice(0,size).map(([key,value],index)=>`<label><input class="memory-name" data-memory-index="${index}" value="${key}" aria-label="Endereço de memória ${index}"><input class="memory-value" type="number" data-memory="${key}" value="${value}" aria-label="Valor de memória ${key}"></label>`).join('');
+  document.querySelectorAll('.memory-value').forEach(i=>i.addEventListener('change',e=>memory[e.target.dataset.memory]=+e.target.value||0));
+  document.querySelectorAll('.memory-name').forEach(i=>i.addEventListener('change',e=>{const valueInput=e.target.nextElementSibling,oldKey=valueInput.dataset.memory,newKey=e.target.value.trim().toUpperCase().replace(/\s+/g,'_')||oldKey;if(newKey!==oldKey&&newKey in memory){e.target.value=oldKey;$('output').textContent=`O endereço ${newKey} já existe.`;return}memory[newKey]=memory[oldKey];if(newKey!==oldKey)delete memory[oldKey];valueInput.dataset.memory=newKey;e.target.value=newKey}));
 }
 let lastDestination='';
 function resetMachine(clear=false){pointer=0;stack=[];acc=0;traces=[];lastDestination='';values={};registerKeys().forEach(k=>values[k]=0);if(clear)$('codeEditor').value='';updateLines();renderRegisters();renderTrace();setFlow();$('cycleCount').textContent='CICLO 00';$('output').textContent='Máquina pronta.'}
@@ -63,7 +69,7 @@ function updateLines(){$('lineNumbers').textContent=$('codeEditor').value.split(
 function highlightLine(line){$('lineNumbers').dataset.active=line;$('codeEditor').style.setProperty('--active-line',line)}
 
 document.querySelectorAll('.arch').forEach(btn=>btn.addEventListener('click',()=>{arch=+btn.dataset.arch;document.querySelectorAll('.arch').forEach(b=>{b.classList.toggle('active',b===btn);b.setAttribute('aria-checked',b===btn)});renderArchitecture()}));
-$('registers').addEventListener('input',updateConfig);$('accumulator').addEventListener('change',updateConfig);$('codeEditor').addEventListener('input',()=>{updateLines();pointer=0});
+$('registers').addEventListener('input',updateConfig);$('memorySize').addEventListener('input',()=>{updateConfig();renderMemory()});$('accumulator').addEventListener('change',updateConfig);$('codeEditor').addEventListener('input',()=>{updateLines();pointer=0});
 $('loadExample').addEventListener('click',()=>{ $('codeEditor').value=architectures[arch].code;updateLines();resetMachine(false)});$('resetBtn').addEventListener('click',()=>resetMachine(false));$('stepBtn').addEventListener('click',step);$('runBtn').addEventListener('click',run);
 $('themeBtn').addEventListener('click',()=>{const dark=document.documentElement.dataset.theme!=='dark';document.documentElement.dataset.theme=dark?'dark':'light';$('themeBtn').querySelector('span').textContent=dark?'☀':'☾';$('themeBtn').querySelector('b').textContent=dark?'Tema claro':'Tema escuro';localStorage.setItem('cpu-theme',dark?'dark':'light')});
 if(localStorage.getItem('cpu-theme')==='dark')$('themeBtn').click();renderMemory();renderArchitecture();

@@ -7,7 +7,7 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>CPU Lab — Simulador de Arquitetura</title>
-  <link rel="stylesheet" href="styles.css?v=3.0.0">
+  <link rel="stylesheet" href="styles.css?v=3.1.0">
 </head>
 <body>
 <header class="topbar">
@@ -16,11 +16,6 @@
   <button id="themeBtn" class="theme-btn" aria-label="Alternar tema"><span>☾</span><b>Tema escuro</b></button>
 </header>
 <main>
-  <section class="intro">
-    <div><p class="kicker"><b class="new-badge">NOVO</b> ARQUITETURA DE COMPUTADORES / SIMULADOR V3</p><h1>Veja os dados<br><em>percorrerem a CPU.</em></h1></div>
-    <p>Configure registradores, escreva instruções e acompanhe cada movimento dos dados, ciclo por ciclo.</p>
-  </section>
-
   <section class="setup" id="simulador">
     <div class="section-title"><div><span>01 / MÁQUINA</span><h2>Escolha a arquitetura</h2></div><p>O formato muda como operandos e resultados circulam.</p></div>
     <div class="arch-picker" role="radiogroup" aria-label="Arquitetura">
@@ -30,9 +25,10 @@
       <button class="arch" data-arch="0" role="radio" aria-checked="false"><b>0 endereços</b><small>OP · PILHA</small></button>
     </div>
     <div class="controls">
-      <label><span>QUANTIDADE DE REGISTRADORES <output id="regValue">4</output></span><input id="registers" type="range" min="2" max="8" value="4"></label>
+      <label><span>QUANTIDADE DE REGISTRADORES <output id="regValue">8</output></span><input id="registers" type="range" min="2" max="32" value="8"></label>
+      <label><span>POSIÇÕES DE MEMÓRIA <output id="memoryValue">16</output></span><input id="memorySize" type="range" min="8" max="64" step="8" value="16"></label>
       <label class="switch-row"><span><b>USAR ACUMULADOR</b><small>Ativado automaticamente em 1 endereço</small></span><input id="accumulator" type="checkbox"><i></i></label>
-      <div class="machine-id"><small>ID DA MÁQUINA</small><strong id="machineId">3E–04R–STD</strong></div>
+      <div class="machine-id"><small>ID DA MÁQUINA</small><strong id="machineId">3E–08R–16M–STD</strong></div>
     </div>
   </section>
 
@@ -55,7 +51,7 @@
         <div class="card-head"><b>REGISTRADORES</b><span id="cycleCount">CICLO 00</span></div>
         <p class="edit-hint">Clique no nome ou valor para editar.</p>
         <div id="registerList" class="register-list"></div>
-        <div class="memory"><div><b>MEMÓRIA</b><small>EDITÁVEL</small></div><div id="memoryGrid"></div></div>
+        <div class="memory"><div><b>MEMÓRIA</b><small>ENDEREÇO E VALOR EDITÁVEIS</small></div><div id="memoryGrid"></div></div>
       </aside>
     </div>
 
@@ -71,6 +67,6 @@
     </section>
   </section>
 </main>
-<footer><b>CPU LAB</b><span>Aprenda instrução por instrução.</span><small>v3.0</small></footer>
-<script src="script.js?v=3.0.0"></script>
+<footer><b>CPU LAB</b><span>Aprenda instrução por instrução.</span><small>v3.1</small></footer>
+<script src="script.js?v=3.1.0"></script>
 </body></html>
