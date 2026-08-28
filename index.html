@@ -7,33 +7,28 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>CPU Lab — Simulador de Arquitetura</title>
-  <link rel="stylesheet" href="styles.css?v=3.1.0">
+  <link rel="stylesheet" href="styles.css?v=3.3.0">
 </head>
 <body>
 <header class="topbar">
   <a class="brand" href="#"><span>C:</span> CPU LAB <small>V3</small></a>
-  <nav><a href="#simulador">Máquina</a><a href="#laboratorio">Laboratório</a></nav>
+  <div class="header-architectures arch-picker" role="radiogroup" aria-label="Arquitetura">
+    <button class="arch" data-arch="3" role="radio" aria-checked="false"><b>3 end.</b><small>OP D,A,B</small></button>
+    <button class="arch" data-arch="2" role="radio" aria-checked="false"><b>2 end.</b><small>OP D,A</small></button>
+    <button class="arch" data-arch="1" role="radio" aria-checked="false"><b>1 end.</b><small>OP A · ACC</small></button>
+    <button class="arch active" data-arch="0" role="radio" aria-checked="true"><b>0 end.</b><small>PILHA</small></button>
+  </div>
   <button id="themeBtn" class="theme-btn" aria-label="Alternar tema"><span>☾</span><b>Tema escuro</b></button>
 </header>
 <main>
-  <section class="setup" id="simulador">
-    <div class="section-title"><div><span>01 / MÁQUINA</span><h2>Escolha a arquitetura</h2></div><p>O formato muda como operandos e resultados circulam.</p></div>
-    <div class="arch-picker" role="radiogroup" aria-label="Arquitetura">
-      <button class="arch active" data-arch="3" role="radio" aria-checked="true"><b>3 endereços</b><small>OP D, A, B</small></button>
-      <button class="arch" data-arch="2" role="radio" aria-checked="false"><b>2 endereços</b><small>OP D, A</small></button>
-      <button class="arch" data-arch="1" role="radio" aria-checked="false"><b>1 endereço</b><small>OP A · ACC</small></button>
-      <button class="arch" data-arch="0" role="radio" aria-checked="false"><b>0 endereços</b><small>OP · PILHA</small></button>
-    </div>
-    <div class="controls">
-      <label><span>QUANTIDADE DE REGISTRADORES <output id="regValue">8</output></span><input id="registers" type="range" min="2" max="32" value="8"></label>
-      <label><span>POSIÇÕES DE MEMÓRIA <output id="memoryValue">16</output></span><input id="memorySize" type="range" min="8" max="64" step="8" value="16"></label>
-      <label class="switch-row"><span><b>USAR ACUMULADOR</b><small>Ativado automaticamente em 1 endereço</small></span><input id="accumulator" type="checkbox"><i></i></label>
-      <div class="machine-id"><small>ID DA MÁQUINA</small><strong id="machineId">3E–08R–16M–STD</strong></div>
-    </div>
-  </section>
-
   <section class="lab" id="laboratorio">
-    <div class="section-title lab-title"><div><span>02 / LABORATÓRIO</span><h2>Programe e acompanhe</h2></div><p id="archDescription"></p></div>
+    <div class="section-title lab-title"><div><span>01 / LABORATÓRIO</span><h2>Configure, programe e acompanhe</h2></div><p id="archDescription"></p></div>
+    <div class="controls lab-controls">
+      <label><span>QUANTIDADE DE REGISTRADORES <output id="regValue">8</output></span><input id="registers" type="range" min="2" max="32" value="8"></label>
+      <label><span>POSIÇÕES DE MEMÓRIA <output id="memoryValue">8</output></span><input id="memorySize" type="range" min="8" max="64" step="8" value="8"></label>
+      <label class="switch-row"><span><b>USAR ACUMULADOR</b><small>Ativado automaticamente em 1 endereço</small></span><input id="accumulator" type="checkbox" checked><i></i></label>
+      <div class="machine-id"><small>ID DA MÁQUINA</small><strong id="machineId">0E–08R–08M–ACC</strong></div>
+    </div>
     <div class="lab-layout">
       <aside class="reference card">
         <div class="card-head"><b>INSTRUÇÕES</b><span id="instructionCount"></span></div>
@@ -42,7 +37,7 @@
       </aside>
 
       <section class="editor card">
-        <div class="card-head"><b><i class="file-dot"></i> PROGRAMA.ASM</b><button id="loadExample">Carregar exemplo</button></div>
+        <div class="card-head"><b><i class="file-dot"></i> PROGRAMA.ASM</b><div class="editor-tools"><button id="loadExample">Carregar exemplo</button><button id="exportPdf" class="export-button">⇩ Exportar PDF</button></div></div>
         <div class="editor-body"><pre id="lineNumbers" aria-hidden="true">1</pre><textarea id="codeEditor" aria-label="Código assembly" spellcheck="false"></textarea></div>
         <div class="actions"><button id="resetBtn" class="secondary">↺ Reiniciar</button><button id="stepBtn" class="secondary">↦ Próximo ciclo</button><button id="runBtn" class="primary">▶ Executar tudo</button></div>
       </section>
@@ -67,6 +62,6 @@
     </section>
   </section>
 </main>
-<footer><b>CPU LAB</b><span>Aprenda instrução por instrução.</span><small>v3.1</small></footer>
-<script src="script.js?v=3.1.0"></script>
+<footer><b>CPU LAB</b><span>Aprenda instrução por instrução.</span><small>v3.3</small></footer>
+<script src="script.js?v=3.3.0"></script>
 </body></html>

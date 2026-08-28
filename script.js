@@ -5,7 +5,7 @@ const architectures = {
   0:{description:'Operandos ficam na pilha; as operações consomem os dois itens do topo.',instructions:[['PUSH','Empilha um valor'],['POP','Desempilha um valor'],['ADD','Soma o topo'],['SUB','Subtrai o topo'],['MUL','Multiplica o topo'],['DIV','Divide o topo']],example:'PUSH A · PUSH B · SUB',explain:'A e B entram na pilha; a ULA devolve A − B ao topo.',code:'; Calcular (A - B) × C\nPUSH A\nPUSH B\nSUB\nPUSH C\nMUL\nPOP RESULT'}
 };
 const $=id=>document.getElementById(id);
-let arch=3, values={}, labels={}, memory={A:12,B:4,C:3,D:2,E:5,F:2,G:1,H:2,RESULT:0};
+let arch=0, values={}, labels={}, memory={A:12,B:4,C:3,D:2,E:5,F:2,G:1,H:2,RESULT:0};
 let program=[], pointer=0, stack=[], acc=0, traces=[];
 
 function registerKeys(){return Array.from({length:+$('registers').value},(_,i)=>`R${i+1}`)}
@@ -67,9 +67,19 @@ function setFlow(source='—',op='—',dest='—'){$('flowSource').textContent=s
 function renderTrace(){$('traceBody').innerHTML=traces.length?traces.map(t=>`<tr><td>${String(t.cycle).padStart(2,'0')}</td><td><code>${t.instruction}</code></td><td>${t.source}</td><td><b>${t.operation}</b></td><td>${t.dest}</td></tr>`).join(''):'<tr class="empty"><td colspan="5">Execute ou avance um ciclo para visualizar o caminho.</td></tr>'}
 function updateLines(){$('lineNumbers').textContent=$('codeEditor').value.split('\n').map((_,i)=>i+1).join('\n')}
 function highlightLine(line){$('lineNumbers').dataset.active=line;$('codeEditor').style.setProperty('--active-line',line)}
+function escapeHtml(value){return String(value).replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]))}
+function exportPdf(){
+  const registerRows=registerKeys().map(key=>`<tr><td>${escapeHtml(key)}</td><td>${escapeHtml(displayName(key))}</td><td>${escapeHtml(values[key]??0)}</td></tr>`).join('');
+  const memoryRows=Object.entries(memory).map(([key,value])=>`<tr><td>${escapeHtml(key)}</td><td>${escapeHtml(value)}</td></tr>`).join('');
+  const traceRows=traces.length?traces.map(t=>`<tr><td>${t.cycle}</td><td><code>${escapeHtml(t.instruction)}</code></td><td>${escapeHtml(t.source)}</td><td>${escapeHtml(t.operation)}</td><td>${escapeHtml(t.dest)}</td></tr>`).join(''):'<tr><td colspan="5">O programa ainda não foi executado.</td></tr>';
+  const report=window.open('','_blank','width=980,height=760');
+  if(!report){$('output').textContent='Permita pop-ups para exportar o PDF.';return}
+  report.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><title>CPU Lab — Programa</title><style>@page{size:A4;margin:16mm}*{box-sizing:border-box}body{font:12px Arial;color:#102a43;margin:0}header{border-bottom:3px solid #2296df;padding-bottom:14px;margin-bottom:24px;display:flex;justify-content:space-between}h1{font-size:24px;margin:0}h2{font-size:14px;color:#1269a2;margin:24px 0 8px}small{color:#607d91}pre{background:#082b4c;color:#fff;padding:16px;border-radius:6px;white-space:pre-wrap;font:11px/1.6 monospace}table{width:100%;border-collapse:collapse;font-size:10px}th,td{border:1px solid #bfd5e4;padding:7px;text-align:left}th{background:#e8f4fb;color:#0b527f}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.meta{margin:4px 0 20px;color:#45657a}@media print{button{display:none}}</style></head><body><header><div><h1>CPU LAB</h1><small>Relatório do programa</small></div><b>${escapeHtml($('machineId').textContent)}</b></header><p class="meta"><b>Arquitetura:</b> ${arch} endereço(s) · <b>Ciclos executados:</b> ${pointer}</p><h2>Código Assembly</h2><pre>${escapeHtml($('codeEditor').value)}</pre><div class="grid"><section><h2>Registradores</h2><table><thead><tr><th>Registrador</th><th>Nome</th><th>Valor</th></tr></thead><tbody>${registerRows}</tbody></table></section><section><h2>Memória</h2><table><thead><tr><th>Endereço</th><th>Valor</th></tr></thead><tbody>${memoryRows}</tbody></table></section></div><h2>Rastreamento dos ciclos</h2><table><thead><tr><th>Ciclo</th><th>Instrução</th><th>Leitura</th><th>Operação</th><th>Escrita</th></tr></thead><tbody>${traceRows}</tbody></table><script>window.onload=()=>{window.print()};window.onafterprint=()=>window.close()<\/script></body></html>`);
+  report.document.close();$('output').textContent='Relatório aberto. Escolha “Salvar como PDF” na impressão.';
+}
 
 document.querySelectorAll('.arch').forEach(btn=>btn.addEventListener('click',()=>{arch=+btn.dataset.arch;document.querySelectorAll('.arch').forEach(b=>{b.classList.toggle('active',b===btn);b.setAttribute('aria-checked',b===btn)});renderArchitecture()}));
 $('registers').addEventListener('input',updateConfig);$('memorySize').addEventListener('input',()=>{updateConfig();renderMemory()});$('accumulator').addEventListener('change',updateConfig);$('codeEditor').addEventListener('input',()=>{updateLines();pointer=0});
-$('loadExample').addEventListener('click',()=>{ $('codeEditor').value=architectures[arch].code;updateLines();resetMachine(false)});$('resetBtn').addEventListener('click',()=>resetMachine(false));$('stepBtn').addEventListener('click',step);$('runBtn').addEventListener('click',run);
+$('loadExample').addEventListener('click',()=>{ $('codeEditor').value=architectures[arch].code;updateLines();resetMachine(false)});$('exportPdf').addEventListener('click',exportPdf);$('resetBtn').addEventListener('click',()=>resetMachine(false));$('stepBtn').addEventListener('click',step);$('runBtn').addEventListener('click',run);
 $('themeBtn').addEventListener('click',()=>{const dark=document.documentElement.dataset.theme!=='dark';document.documentElement.dataset.theme=dark?'dark':'light';$('themeBtn').querySelector('span').textContent=dark?'☀':'☾';$('themeBtn').querySelector('b').textContent=dark?'Tema claro':'Tema escuro';localStorage.setItem('cpu-theme',dark?'dark':'light')});
 if(localStorage.getItem('cpu-theme')==='dark')$('themeBtn').click();renderMemory();renderArchitecture();
