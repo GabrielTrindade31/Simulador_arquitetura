@@ -1,55 +1,69 @@
 const architectures = {
-  3: { description: 'Cada instrução informa o destino e dois operandos. Não altera os dados originais.', instructions: [['ADD','Soma dois operandos'],['SUB','Subtrai o segundo do primeiro'],['MUL','Multiplica dois operandos'],['DIV','Divide o primeiro pelo segundo']], example: 'SUB R1, A, B', explain: 'Calcula A − B e armazena o resultado em R1.', code: '; Calcular (A - B) × C\nSUB R1, A, B\nMUL R2, R1, C' },
-  2: { description: 'O primeiro operando também recebe o resultado. Use MOV para preservar os valores originais.', instructions: [['MOV','Copia um valor para o destino'],['ADD','Soma ao registrador destino'],['SUB','Subtrai do registrador destino'],['MUL','Multiplica o registrador destino'],['DIV','Divide o registrador destino']], example: 'SUB R1, B', explain: 'Subtrai B de R1 e guarda o resultado em R1.', code: '; Calcular (A - B) × C\nMOV R1, A\nSUB R1, B\nMUL R1, C' },
-  1: { description: 'As operações usam o acumulador de forma implícita. LOAD e STORE movimentam os dados.', instructions: [['LOAD','Carrega um valor no acumulador'],['STORE','Salva o valor do acumulador'],['ADD','Soma um valor ao acumulador'],['SUB','Subtrai um valor do acumulador'],['MUL','Multiplica o acumulador'],['DIV','Divide o acumulador']], example: 'LOAD A  ·  SUB B', explain: 'Carrega A no acumulador e então subtrai B.', code: '; Calcular (A - B) × C\nLOAD A\nSUB B\nMUL C\nSTORE RESULT' },
-  0: { description: 'Uma máquina de pilha usa operandos implícitos. PUSH empilha dados; as operações consomem o topo.', instructions: [['PUSH','Coloca um valor na pilha'],['POP','Retira o valor do topo'],['ADD','Soma os dois valores do topo'],['SUB','Subtrai os dois valores do topo'],['MUL','Multiplica os dois valores do topo'],['DIV','Divide os dois valores do topo']], example: 'PUSH A  ·  PUSH B  ·  SUB', explain: 'Empilha A e B; SUB consome ambos e empilha A − B.', code: '; Calcular (A - B) × C\nPUSH A\nPUSH B\nSUB\nPUSH C\nMUL\nPOP RESULT' }
+  3:{description:'Destino e dois operandos explícitos; os dados originais são preservados.',instructions:[['ADD','Soma A + B'],['SUB','Subtrai A − B'],['MUL','Multiplica A × B'],['DIV','Divide A ÷ B']],example:'SUB R1, A, B',explain:'Lê A e B, passa pela ULA e escreve em R1.',code:'; Calcular (A - B) × C\nSUB R1, A, B\nMUL R2, R1, C'},
+  2:{description:'O registrador de destino também é o primeiro operando.',instructions:[['MOV','Copia um valor'],['ADD','Soma ao destino'],['SUB','Subtrai do destino'],['MUL','Multiplica o destino'],['DIV','Divide o destino']],example:'SUB R1, B',explain:'Lê R1 e B; o resultado volta para R1.',code:'; Calcular (A - B) × C\nMOV R1, A\nSUB R1, B\nMUL R1, C'},
+  1:{description:'A ULA usa o acumulador implícito para todas as operações.',instructions:[['LOAD','Carrega no ACC'],['STORE','Salva o ACC'],['ADD','Soma ao ACC'],['SUB','Subtrai do ACC'],['MUL','Multiplica o ACC'],['DIV','Divide o ACC']],example:'LOAD A · SUB B',explain:'A vai ao ACC; B segue para a ULA; o resultado volta ao ACC.',code:'; Calcular (A - B) × C\nLOAD A\nSUB B\nMUL C\nSTORE RESULT'},
+  0:{description:'Operandos ficam na pilha; as operações consomem os dois itens do topo.',instructions:[['PUSH','Empilha um valor'],['POP','Desempilha um valor'],['ADD','Soma o topo'],['SUB','Subtrai o topo'],['MUL','Multiplica o topo'],['DIV','Divide o topo']],example:'PUSH A · PUSH B · SUB',explain:'A e B entram na pilha; a ULA devolve A − B ao topo.',code:'; Calcular (A - B) × C\nPUSH A\nPUSH B\nSUB\nPUSH C\nMUL\nPOP RESULT'}
 };
-const memory = { A:12, B:4, C:3, D:2, E:5, F:2, G:1, H:2, RESULT:0 };
-let arch = 3, values = {}, cycle = 0;
-const $ = id => document.getElementById(id);
+const $=id=>document.getElementById(id);
+let arch=3, values={}, labels={}, memory={A:12,B:4,C:3,D:2,E:5,F:2,G:1,H:2,RESULT:0};
+let program=[], pointer=0, stack=[], acc=0, traces=[];
 
-function renderArchitecture(loadCode=true){
+function registerKeys(){return Array.from({length:+$('registers').value},(_,i)=>`R${i+1}`)}
+function displayName(key){return labels[key]||key}
+function resolveName(token){const upper=token?.toUpperCase();return Object.keys(labels).find(k=>labels[k].toUpperCase()===upper)||upper}
+function read(token){const key=resolveName(token);if(key in values)return +values[key];if(key in memory)return +memory[key];const number=Number(key);if(Number.isNaN(number))throw Error(`operando “${token}” não encontrado`);return number}
+function format(value){return Number.isFinite(+value)?String(+value):'0'}
+
+function renderArchitecture(load=true){
   const data=architectures[arch];
-  $('archDescription').textContent=data.description;
-  $('instructionCount').textContent=`${data.instructions.length} OPERAÇÕES`;
-  $('instructionList').innerHTML=data.instructions.map(([op,desc])=>`<div class="instruction"><b>${op}</b><span>${desc}</span></div>`).join('');
-  $('quickExample').textContent=data.example; $('exampleExplanation').textContent=data.explain;
-  if(loadCode) $('codeEditor').value=data.code;
-  if(arch===1){$('accumulator').checked=true;$('accumulator').disabled=true}else{$('accumulator').disabled=false}
-  updateMachine(); updateLines(); resetState(false);
+  $('archDescription').textContent=data.description;$('instructionCount').textContent=`${data.instructions.length} OPS`;
+  $('instructionList').innerHTML=data.instructions.map(([op,text])=>`<div class="instruction"><code>${op}</code><span>${text}</span></div>`).join('');
+  $('quickExample').textContent=data.example;$('exampleExplanation').textContent=data.explain;
+  if(load)$('codeEditor').value=data.code;
+  $('accumulator').disabled=arch===1;if(arch===1)$('accumulator').checked=true;
+  updateConfig();updateLines();resetMachine(false);
 }
-function updateMachine(){
-  const regs=+$('registers').value; $('regValue').textContent=regs;
-  $('machineId').textContent=`${arch}E–${String(regs).padStart(2,'0')}R–${$('accumulator').checked?'ACC':'STD'}`;
-  renderRegisters();
+function updateConfig(){
+  $('regValue').value=$('registers').value;
+  $('machineId').textContent=`${arch}E–${String($('registers').value).padStart(2,'0')}R–${$('accumulator').checked?'ACC':'STD'}`;
+  registerKeys().forEach(k=>{if(!(k in values))values[k]=0;if(!labels[k])labels[k]=k});renderRegisters();
 }
 function renderRegisters(){
-  const count=+$('registers').value, accumulator=$('accumulator').checked;
-  let html=accumulator?`<div class="register"><span>ACC</span><b>${values.ACC??'0x0000'}</b></div>`:'';
-  for(let i=1;i<=count;i++) html+=`<div class="register"><span>R${i}</span><b>${values['R'+i]??'0x0000'}</b></div>`;
-  $('registerList').innerHTML=html;
+  let keys=registerKeys();if($('accumulator').checked&&!keys.includes('ACC'))keys=['ACC',...keys];
+  $('registerList').innerHTML=keys.map(key=>`<div class="register ${key===lastDestination?'changed':''}" data-key="${key}"><input class="reg-name" value="${displayName(key)}" aria-label="Nome de ${key}" title="Renomear ${key}"><span>${key}</span><input class="reg-value" type="number" value="${format(key==='ACC'?acc:values[key]||0)}" aria-label="Valor de ${displayName(key)}"></div>`).join('');
+  document.querySelectorAll('.reg-name').forEach(input=>input.addEventListener('change',e=>{const key=e.target.closest('.register').dataset.key;const name=e.target.value.trim().replace(/\s+/g,'_');labels[key]=name||key;e.target.value=labels[key]}));
+  document.querySelectorAll('.reg-value').forEach(input=>input.addEventListener('change',e=>{const key=e.target.closest('.register').dataset.key;if(key==='ACC')acc=+e.target.value||0;else values[key]=+e.target.value||0}));
 }
-function resetState(clear=true){values={};cycle=0;$('cycleCount').textContent='CICLO 00';$('output').innerHTML='Aguardando execução<span class="blink">_</span>';renderRegisters();if(clear){$('codeEditor').value='';updateLines()}}
-function valueOf(token){token=token?.toUpperCase();if(token in values)return Number(values[token]);if(token in memory)return memory[token];return Number(token)||0}
-function execute(){
-  values={}; cycle=0; const stack=[]; let acc=0;
-  const lines=$('codeEditor').value.split('\n').map(x=>x.split(';')[0].trim()).filter(Boolean);
-  try{for(const line of lines){cycle++;const [op,...args]=line.replaceAll(',',' ').split(/\s+/);const cmd=op.toUpperCase();
-    if(arch===3){const [d,a,b]=args.map(x=>x.toUpperCase());values[d]=calculate(cmd,valueOf(a),valueOf(b))}
-    else if(arch===2){const [d,s]=args.map(x=>x.toUpperCase());if(cmd==='MOV')values[d]=valueOf(s);else values[d]=calculate(cmd,valueOf(d),valueOf(s))}
-    else if(arch===1){const target=args[0]?.toUpperCase();if(cmd==='LOAD')acc=valueOf(target);else if(cmd==='STORE')values[target]=acc;else acc=calculate(cmd,acc,valueOf(target));values.ACC=acc}
-    else {if(cmd==='PUSH')stack.push(valueOf(args[0]));else if(cmd==='POP')values[args[0]?.toUpperCase()||'RESULT']=stack.pop()??0;else{const b=stack.pop(),a=stack.pop();stack.push(calculate(cmd,a,b))}}
-  }}catch(e){$('output').textContent=`Erro: ${e.message}`;return}
-  $('cycleCount').textContent=`CICLO ${String(cycle).padStart(2,'0')}`;renderRegisters();
-  const result=values.RESULT ?? values.R2 ?? values.R1 ?? values.ACC ?? stack.at(-1) ?? 0;
-  $('output').textContent=`Execução concluída · resultado = ${result}`;
+function renderMemory(){
+  $('memoryGrid').innerHTML=Object.entries(memory).map(([key,value])=>`<label><span>${key}</span><input type="number" data-memory="${key}" value="${value}" aria-label="Memória ${key}"></label>`).join('');
+  document.querySelectorAll('[data-memory]').forEach(i=>i.addEventListener('change',e=>memory[e.target.dataset.memory]=+e.target.value||0));
 }
+let lastDestination='';
+function resetMachine(clear=false){pointer=0;stack=[];acc=0;traces=[];lastDestination='';values={};registerKeys().forEach(k=>values[k]=0);if(clear)$('codeEditor').value='';updateLines();renderRegisters();renderTrace();setFlow();$('cycleCount').textContent='CICLO 00';$('output').textContent='Máquina pronta.'}
+function parseProgram(){return $('codeEditor').value.split('\n').map((raw,index)=>({raw:raw.trim(),line:index+1,text:raw.split(';')[0].trim()})).filter(x=>x.text)}
 function calculate(op,a,b){if(op==='ADD')return a+b;if(op==='SUB')return a-b;if(op==='MUL')return a*b;if(op==='DIV'){if(b===0)throw Error('divisão por zero');return a/b}throw Error(`instrução ${op} inválida`)}
+function step(){
+  if(pointer===0)program=parseProgram();if(pointer>=program.length){$('output').textContent='Programa concluído.';return false}
+  const item=program[pointer],parts=item.text.replaceAll(',',' ').split(/\s+/),op=parts.shift().toUpperCase(),args=parts;let source='',operation=op,dest='',result;
+  try{
+    if(arch===3){const [d,a,b]=args.map(resolveName);const va=read(a),vb=read(b);result=calculate(op,va,vb);values[d]=result;source=`${displayName(a)} (${va}) + ${displayName(b)} (${vb})`;dest=`${displayName(d)} ← ${result}`;lastDestination=d}
+    else if(arch===2){const [d,s]=args.map(resolveName);const vs=read(s);if(op==='MOV'){result=vs;source=`${displayName(s)} (${vs})`;operation='TRANSFERÊNCIA'}else{const vd=read(d);result=calculate(op,vd,vs);source=`${displayName(d)} (${vd}) + ${displayName(s)} (${vs})`}values[d]=result;dest=`${displayName(d)} ← ${result}`;lastDestination=d}
+    else if(arch===1){const target=resolveName(args[0]),v=read(target);if(op==='LOAD'){acc=v;source=`${displayName(target)} (${v})`;operation='TRANSFERÊNCIA'}else if(op==='STORE'){values[target]=acc;source=`ACC (${acc})`;dest=`${displayName(target)} ← ${acc}`;lastDestination=target}else{const before=acc;acc=calculate(op,acc,v);source=`ACC (${before}) + ${displayName(target)} (${v})`}if(!dest){dest=`ACC ← ${acc}`;lastDestination='ACC'}result=acc}
+    else if(op==='PUSH'){const v=read(args[0]);stack.push(v);source=`${displayName(resolveName(args[0]))} (${v})`;operation='EMPILHAR';dest=`PILHA ← ${v}`;result=v;lastDestination=''}
+    else if(op==='POP'){result=stack.pop()??0;const d=resolveName(args[0]||'RESULT');values[d]=result;source=`TOPO (${result})`;operation='DESEMPILHAR';dest=`${displayName(d)} ← ${result}`;lastDestination=d}
+    else{const b=stack.pop(),a=stack.pop();if(a===undefined||b===undefined)throw Error('pilha sem operandos suficientes');result=calculate(op,a,b);stack.push(result);source=`PILHA (${a}) + TOPO (${b})`;dest=`PILHA ← ${result}`;lastDestination=''}
+    pointer++;traces.push({cycle:pointer,line:item.line,instruction:item.text,source,operation,dest});
+    renderRegisters();renderTrace();setFlow(source,operation,dest);highlightLine(item.line);$('cycleCount').textContent=`CICLO ${String(pointer).padStart(2,'0')}`;$('output').textContent=pointer===program.length?`Concluído · resultado ${result}`:`Ciclo ${pointer} concluído · ${dest}`;return pointer<program.length;
+  }catch(error){$('output').textContent=`Erro na linha ${item.line}: ${error.message}`;$('flowStatus').textContent='ERRO';return false}
+}
+function run(){if(pointer>=parseProgram().length)resetMachine(false);let guard=0;while(step()&&guard++<100){} }
+function setFlow(source='—',op='—',dest='—'){$('flowSource').textContent=source;$('flowOp').textContent=op;$('flowDest').textContent=dest;$('flowStatus').textContent=source==='—'?'AGUARDANDO':`CICLO ${String(pointer).padStart(2,'0')}`;document.querySelectorAll('.unit,.bus').forEach(el=>{el.classList.remove('pulse');void el.offsetWidth;if(source!=='—')el.classList.add('pulse')})}
+function renderTrace(){$('traceBody').innerHTML=traces.length?traces.map(t=>`<tr><td>${String(t.cycle).padStart(2,'0')}</td><td><code>${t.instruction}</code></td><td>${t.source}</td><td><b>${t.operation}</b></td><td>${t.dest}</td></tr>`).join(''):'<tr class="empty"><td colspan="5">Execute ou avance um ciclo para visualizar o caminho.</td></tr>'}
 function updateLines(){$('lineNumbers').textContent=$('codeEditor').value.split('\n').map((_,i)=>i+1).join('\n')}
+function highlightLine(line){$('lineNumbers').dataset.active=line;$('codeEditor').style.setProperty('--active-line',line)}
 
-document.querySelectorAll('.arch-card').forEach(btn=>btn.addEventListener('click',()=>{arch=+btn.dataset.arch;document.querySelectorAll('.arch-card').forEach(b=>{b.classList.toggle('active',b===btn);b.setAttribute('aria-checked',b===btn)});renderArchitecture()}));
-$('registers').addEventListener('input',updateMachine);$('accumulator').addEventListener('change',updateMachine);
-$('codeEditor').addEventListener('input',updateLines);$('loadExample').addEventListener('click',()=>{ $('codeEditor').value=architectures[arch].code;updateLines() });
-$('runBtn').addEventListener('click',execute);$('resetBtn').addEventListener('click',()=>resetState(true));
-$('memoryGrid').innerHTML=Object.entries(memory).slice(0,4).map(([k,v])=>`<div class="memory-cell"><span>${k}</span>${v}</div>`).join('');
-renderArchitecture();
+document.querySelectorAll('.arch').forEach(btn=>btn.addEventListener('click',()=>{arch=+btn.dataset.arch;document.querySelectorAll('.arch').forEach(b=>{b.classList.toggle('active',b===btn);b.setAttribute('aria-checked',b===btn)});renderArchitecture()}));
+$('registers').addEventListener('input',updateConfig);$('accumulator').addEventListener('change',updateConfig);$('codeEditor').addEventListener('input',()=>{updateLines();pointer=0});
+$('loadExample').addEventListener('click',()=>{ $('codeEditor').value=architectures[arch].code;updateLines();resetMachine(false)});$('resetBtn').addEventListener('click',()=>resetMachine(false));$('stepBtn').addEventListener('click',step);$('runBtn').addEventListener('click',run);
+$('themeBtn').addEventListener('click',()=>{const dark=document.documentElement.dataset.theme!=='dark';document.documentElement.dataset.theme=dark?'dark':'light';$('themeBtn').querySelector('span').textContent=dark?'☀':'☾';$('themeBtn').querySelector('b').textContent=dark?'Tema claro':'Tema escuro';localStorage.setItem('cpu-theme',dark?'dark':'light')});
+if(localStorage.getItem('cpu-theme')==='dark')$('themeBtn').click();renderMemory();renderArchitecture();
