@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Simulador educacional de arquiteturas de CPU de zero a três endereços.">
+  <title>CPU Lab — Simulador de Arquitetura</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="CPU Lab — início"><span class="brand-mark">C:</span> CPU LAB</a>
+    <nav aria-label="Navegação principal">
+      <a class="active" href="#simulador">Simulador</a>
+      <a href="#instrucoes">Instruções</a>
+      <a href="#sobre">Sobre</a>
+    </nav>
+    <span class="status"><i></i> Sistema pronto</span>
+  </header>
+
+  <main>
+    <section class="hero" id="sobre">
+      <div>
+        <p class="eyebrow">ARQUITETURA DE COMPUTADORES <span>— 01</span></p>
+        <h1>Entenda como a<br><em>CPU pensa.</em></h1>
+      </div>
+      <div class="hero-copy">
+        <p>Configure uma máquina, escreva instruções e acompanhe cada ciclo de execução em tempo real.</p>
+        <a href="#simulador">Começar experimento <span>↘</span></a>
+      </div>
+    </section>
+
+    <section class="workspace" id="simulador">
+      <div class="section-head">
+        <div><span>01 / CONFIGURAÇÃO</span><h2>Monte sua máquina</h2></div>
+        <p>Escolha o formato das instruções e os recursos disponíveis.</p>
+      </div>
+
+      <div class="architecture-picker" role="radiogroup" aria-label="Arquitetura da máquina">
+        <button class="arch-card active" data-arch="3" role="radio" aria-checked="true"><span>3</span><strong>Três endereços</strong><small>OP DEST, SRC1, SRC2</small></button>
+        <button class="arch-card" data-arch="2" role="radio" aria-checked="false"><span>2</span><strong>Dois endereços</strong><small>OP DEST, SRC</small></button>
+        <button class="arch-card" data-arch="1" role="radio" aria-checked="false"><span>1</span><strong>Um endereço</strong><small>OP ENDEREÇO</small></button>
+        <button class="arch-card" data-arch="0" role="radio" aria-checked="false"><span>0</span><strong>Zero endereços</strong><small>OP · PILHA</small></button>
+      </div>
+
+      <div class="config-row">
+        <label>REGISTRADORES <span id="regValue">4</span><input id="registers" type="range" min="2" max="8" value="4"></label>
+        <label class="toggle-wrap"><span><b>ACUMULADOR</b><small>Registrador implícito para operações</small></span><input id="accumulator" type="checkbox"><i aria-hidden="true"></i></label>
+        <div class="machine-id"><span>ID DA MÁQUINA</span><strong id="machineId">3E–04R–STD</strong></div>
+      </div>
+    </section>
+
+    <section class="lab" id="instrucoes">
+      <div class="section-head light">
+        <div><span>02 / PROGRAMAÇÃO</span><h2>Escreva e execute</h2></div>
+        <p id="archDescription">Cada instrução informa o destino e dois operandos. Não altera os dados originais.</p>
+      </div>
+
+      <div class="lab-grid">
+        <aside class="instruction-panel">
+          <div class="panel-title"><span>CONJUNTO DE INSTRUÇÕES</span><small id="instructionCount">4 OPERAÇÕES</small></div>
+          <div id="instructionList"></div>
+          <div class="example-card"><span>EXEMPLO RÁPIDO</span><code id="quickExample"></code><p id="exampleExplanation"></p></div>
+        </aside>
+
+        <div class="editor-panel">
+          <div class="editor-toolbar"><span><i></i> PROGRAMA.ASM</span><button id="loadExample">Carregar exemplo</button></div>
+          <div class="editor-wrap"><pre id="lineNumbers" aria-hidden="true">1</pre><textarea id="codeEditor" aria-label="Editor de código" spellcheck="false"></textarea></div>
+          <div class="editor-actions">
+            <button class="reset" id="resetBtn">↺ Limpar</button>
+            <button class="run" id="runBtn"><span>▶</span> Executar programa</button>
+          </div>
+        </div>
+
+        <aside class="state-panel">
+          <div class="panel-title"><span>ESTADO DA MÁQUINA</span><small id="cycleCount">CICLO 00</small></div>
+          <div class="register-list" id="registerList"></div>
+          <div class="memory-block"><div><span>MEMÓRIA</span><small>VALORES INICIAIS</small></div><div id="memoryGrid"></div></div>
+          <div class="console"><span>SAÍDA</span><p id="output">Aguardando execução<span class="blink">_</span></p></div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer><span>CPU LAB / SIMULADOR DIDÁTICO</span><p>Feito para aprender, instrução por instrução.</p><span>v1.0.0</span></footer>
+  <script src="script.js"></script>
+</body>
+</html>
