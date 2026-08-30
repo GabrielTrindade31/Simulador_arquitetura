@@ -1,4 +1,4 @@
-# CPU Lab — Simulador de Arquitetura
+# Pulso — Simulador de Arquitetura de CPU
 
 Simulador didático, construído em HTML, CSS e JavaScript puro, para experimentar máquinas de zero, um, dois e três endereços. É possível configurar até 32 registradores e 64 posições de memória, renomear endereços, editar todos os valores e exportar o código e o relatório de execução em PDF.
 
@@ -39,4 +39,15 @@ pkill -f "python3 -m http.server" || true
 python3 -m http.server 8000
 ```
 
-Na aba **Ports**, abra novamente a porta `8000` e acrescente `?v=3` ao final da URL. A versão atual exibe o selo vermelho **NOVO** e o identificador **V3** no cabeçalho.
+Na aba **Ports**, abra novamente a porta `8000` e acrescente `?v=3.5` ao final da URL.
+
+## Publicar na Vercel
+
+O projeto já inclui um `vercel.json` e não precisa de comando de build.
+
+1. Importe este repositório em <https://vercel.com/new>.
+2. Em **Framework Preset**, selecione **Other**.
+3. Deixe **Build Command** e **Output Directory** vazios.
+4. Clique em **Deploy**.
+
+Pelo terminal, a alternativa é executar `npx vercel` na raiz do projeto. Cada `push` na branch principal gera uma nova publicação automaticamente depois que o repositório estiver conectado.
