@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Pulso — laboratório visual brasileiro para aprender arquiteturas de CPU de zero a três endereços.">
+  <meta name="theme-color" content="#082b4c">
+  <meta property="og:title" content="Pulso — Simulador de Arquitetura de CPU">
+  <meta property="og:description" content="Configure uma CPU, programe instruções e acompanhe o caminho dos dados ciclo por ciclo.">
+  <meta property="og:type" content="website">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Pulso — Simulador de Arquitetura de CPU</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css?v=3.5.0">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="#"><span>P›</span> PULSO <small>LAB</small></a>
+  <div class="header-architectures arch-picker" role="radiogroup" aria-label="Arquitetura">
+    <button class="arch" data-arch="3" role="radio" aria-checked="false"><b>3 end.</b><small>OP D,A,B</small></button>
+    <button class="arch" data-arch="2" role="radio" aria-checked="false"><b>2 end.</b><small>OP D,A</small></button>
+    <button class="arch" data-arch="1" role="radio" aria-checked="false"><b>1 end.</b><small>OP A · ACC</small></button>
+    <button class="arch active" data-arch="0" role="radio" aria-checked="true"><b>0 end.</b><small>PILHA</small></button>
+  </div>
+  <button id="themeBtn" class="theme-btn" aria-label="Alternar tema"><span>☾</span><b>Tema escuro</b></button>
+</header>
+<main>
+  <section class="lab" id="laboratorio">
+    <div class="section-title lab-title"><div><span>01 / LABORATÓRIO</span><h2>Configure, programe e acompanhe</h2></div><p id="archDescription"></p></div>
+    <div class="controls lab-controls">
+      <label><span>QUANTIDADE DE REGISTRADORES <output id="regValue">8</output></span><input id="registers" type="range" min="2" max="32" value="8"></label>
+      <label><span>POSIÇÕES DE MEMÓRIA <output id="memoryValue">8</output></span><input id="memorySize" type="range" min="8" max="64" step="8" value="8"></label>
+      <label class="switch-row"><span><b>USAR ACUMULADOR</b><small>Ativado automaticamente em 1 endereço</small></span><input id="accumulator" type="checkbox" checked><i></i></label>
+      <div class="machine-id"><small>ID DA MÁQUINA</small><strong id="machineId">0E–08R–08M–ACC</strong></div>
+    </div>
+    <div class="lab-layout">
+      <aside class="reference card">
+        <div class="card-head"><b>INSTRUÇÕES</b><span id="instructionCount"></span></div>
+        <div id="instructionList"></div>
+        <div class="example"><small>EXEMPLO</small><code id="quickExample"></code><p id="exampleExplanation"></p></div>
+      </aside>
+
+      <section class="editor card">
+        <div class="card-head"><b><i class="file-dot"></i> PROGRAMA.ASM</b><div class="editor-tools"><button id="loadExample">Carregar exemplo</button><button id="exportPdf" class="export-button">⇩ Exportar PDF</button></div></div>
+        <div class="editor-body"><pre id="lineNumbers" aria-hidden="true">1</pre><textarea id="codeEditor" aria-label="Código assembly" spellcheck="false"></textarea></div>
+        <div class="actions"><button id="resetBtn" class="secondary">↺ Reiniciar</button><button id="stepBtn" class="secondary">↦ Próximo ciclo</button><button id="runBtn" class="primary">▶ Executar tudo</button></div>
+      </section>
+
+      <aside class="state card">
+        <div class="card-head"><b>REGISTRADORES</b><span id="cycleCount">CICLO 00</span></div>
+        <p class="edit-hint">Clique no nome ou valor para editar.</p>
+        <div id="registerList" class="register-list"></div>
+        <div class="memory"><div><b>MEMÓRIA</b><small>ENDEREÇO E VALOR EDITÁVEIS</small></div><div id="memoryGrid"></div></div>
+      </aside>
+    </div>
+
+    <section class="flow card">
+      <div class="card-head"><b>CAMINHO DOS DADOS</b><span id="flowStatus">AGUARDANDO</span></div>
+      <div class="cpu-diagram">
+        <div class="unit" id="sourceUnit"><small>ORIGEM</small><strong id="flowSource">—</strong></div><div class="bus"><i></i><span>BUS DE DADOS</span></div>
+        <div class="unit alu" id="aluUnit"><small>ULA / OPERAÇÃO</small><strong id="flowOp">—</strong></div><div class="bus"><i></i><span>RESULTADO</span></div>
+        <div class="unit" id="destUnit"><small>DESTINO</small><strong id="flowDest">—</strong></div>
+      </div>
+      <div class="trace-wrap"><table><thead><tr><th>CICLO</th><th>INSTRUÇÃO</th><th>LEITURA</th><th>OPERAÇÃO</th><th>ESCRITA</th></tr></thead><tbody id="traceBody"><tr class="empty"><td colspan="5">Execute ou avance um ciclo para visualizar o caminho.</td></tr></tbody></table></div>
+      <div class="console"><span>SAÍDA</span><p id="output">Máquina pronta.</p></div>
+    </section>
+  </section>
+</main>
+<footer><b>PULSO</b><span>Arquitetura que você vê. Conhecimento que pulsa.</span><small>v3.5</small></footer>
+<script src="script.js?v=3.5.0"></script>
+</body></html>
